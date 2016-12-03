@@ -12,7 +12,7 @@ import config from '../../../../tools/config';
 // Note: this has to be included here, rather than imported via react-helmet
 // as we may need the polyfills to load our app in the first place! :)
 function polyfillIoScript() {
-  return '<script src="https://cdn.polyfill.io/v2/polyfill.min.js"></script>';
+  return '<script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=fetch"></script>';
 }
 
 function styleTags(styles : Array<string>) {

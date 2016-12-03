@@ -9,6 +9,7 @@ import './globals.css';
 import Error404 from './Error404';
 import Header from './Header';
 import { WEBSITE_TITLE, WEBSITE_DESCRIPTION } from '../../constants';
+import { counterReducer } from './CounterModule';
 
 function App() {
   return (
@@ -73,5 +74,36 @@ function App() {
     </div>
   );
 }
+
+
+/**
+ * Return list of Redux store enhancers to use
+ */
+App.getEnhancers = function() {
+  return []
+}
+
+/**
+ * Create mapping of reducers to use for the Redux store
+ */
+App.getReducers = function() {
+  return {
+    counter: counterReducer,
+  };
+};
+
+/**
+ * Create list of Redux middleware to use.
+ */
+App.getMiddlewares = function() {
+  var middlewares = [];
+
+  if (process.env.TARGET === "client" && process.env.NODE_ENV !== "production") {
+    const createLogger = require("redux-logger");
+    middlewares.push(createLogger({ collapsed: true }));
+  }
+  return middlewares;
+};
+
 
 export default App;

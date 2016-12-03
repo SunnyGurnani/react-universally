@@ -4,6 +4,7 @@
 import React from 'react';
 import { render } from 'react-dom';
 import { BrowserRouter } from 'react-router';
+import { Provider } from "react-redux";
 // This library provides us with the capability to have declerative code
 // splitting within our application.
 // @see https://github.com/ctrlplusb/code-split-component
@@ -12,11 +13,20 @@ import { CodeSplitProvider, rehydrateState } from 'code-split-component';
 import './registerServiceWorker';
 import ReactHotLoader from './components/ReactHotLoader';
 import App from '../shared/components/App';
+import { createReduxStore } from '../shared/Data';
 
 // Get the DOM Element that will host our React application.
 const container = document.querySelector('#app');
 
 function renderApp(TheApp) {
+  const reduxStore = createReduxStore({
+    reducers: App.getReducers(),
+    enhancers: App.getEnhancers(),
+    middlewares: App.getMiddlewares(),
+    initialState: window.APP_STATE,
+  });
+
+
   // Firstly we ensure that we rehydrate any code split state provided to us
   // by the server response. This state typically indicates which bundles/chunks
   // need to be registered for our application to render and the React checksum
@@ -26,9 +36,11 @@ function renderApp(TheApp) {
     render(
       <ReactHotLoader>
         <CodeSplitProvider state={codeSplitState}>
-          <BrowserRouter>
-            <TheApp />
-          </BrowserRouter>
+          <Provider store={reduxStore}>
+            <BrowserRouter>
+              <TheApp />
+            </BrowserRouter>
+          </Provider>
         </CodeSplitProvider>
       </ReactHotLoader>,
       container,

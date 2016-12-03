@@ -84,6 +84,7 @@ export default function webpackConfigFactory(options: BuildOptions) {
     // Define our entry chunks for our bundle.
     entry: {
       index: removeEmpty([
+        ifServer('isomorphic-fetch'),
         ifDevClient('react-hot-loader/patch'),
         ifDevClient(`webpack-hot-middleware/client?reload=true&path=http://${config.server.host}:${config.development.clientDevServerPort}/__webpack_hmr`),
         // We are using polyfill.io instead of the very heavy babel-polyfill.
