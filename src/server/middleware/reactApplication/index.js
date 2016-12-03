@@ -2,14 +2,32 @@
 
 import type { $Request, $Response, Middleware } from 'express';
 import React from 'react';
+import { trigger } from 'redial';
 import { Provider } from 'react-redux';
-import { renderToStringWithData } from 'react-apollo/server';
+import { renderToString } from 'react-dom/server';
 import { ServerRouter, createServerRenderContext } from 'react-router';
+import { RoutesProvider, matchRoutesToLocation } from 'react-router-addons-routes';
 import { CodeSplitProvider, createRenderContext } from 'code-split-component';
 import Helmet from 'react-helmet';
 import generateHTML from './generateHTML';
 import App from '../../../shared/components/App';
 import { createReduxStore } from '../../../shared/Data';
+import routes from '../../../shared/components/App/routes';
+
+
+function fetchServerData(request, dispatch) {
+  const location = { pathname: request.path };
+  const { matchedRoutes, params } = matchRoutesToLocation(routes, location);
+  const locals = {
+    path: request.path,
+    params,
+    matchedRoutes,
+    dispatch,
+  };
+  const components = matchedRoutes.map(route => route.component);
+  return trigger('fetch', components, locals);
+}
+
 
 /**
  * An express middleware that is capabable of doing React server side rendering.
@@ -23,7 +41,7 @@ function universalReactAppMiddleware(request: $Request, response: $Response) {
   const nonce = response.locals.nonce;
   const initialState = {
     ssr: {
-      apolloUri: 'http://localhost:9123',
+      graphQLUrl: 'http://localhost:9123',
     },
   };
 
@@ -60,59 +78,60 @@ function universalReactAppMiddleware(request: $Request, response: $Response) {
   });
 
 
-  // Create our application and render it into a string.
-  console.time('Server: Page Rendering');
-  renderToStringWithData(
-    <CodeSplitProvider context={codeSplitContext}>
+  fetchServerData(request, reduxStore.dispatch).then(() => {
+    const reduxState = reduxStore.getState();
+
+    const renderedApp = renderToString(<CodeSplitProvider context={codeSplitContext}>
       <ServerRouter location={request.url} context={reactRouterContext}>
         <Provider store={reduxStore}>
-          <App />
+          <RoutesProvider routes={routes}>
+            <App />
+          </RoutesProvider>
         </Provider>
       </ServerRouter>
-    </CodeSplitProvider>, reduxStore.dispatch).then((renderedApp) => {
-      console.timeEnd('Server: Page Rendering');
-      const reduxState = reduxStore.getState();
-      // Generate the html response.
-      const html = generateHTML({
-        // Provide the full app react element.
-        app: renderedApp,
+    </CodeSplitProvider>);
 
-        initialState: reduxState,
+    // Generate the html response.
+    const html = generateHTML({
+      // Provide the full app react element.
+      app: renderedApp,
 
-        // Nonce which allows us to safely declare inline scripts.
-        nonce,
-        // Running this gets all the helmet properties (e.g. headers/scripts/title etc)
-        // that need to be included within our html.  It's based on the rendered app.
-        // @see https://github.com/nfl/react-helmet
-        helmet: Helmet.rewind(),
-        // We provide our code split state so that it can be included within the
-        // html, and then the client bundle can use this data to know which chunks/
-        // modules need to be rehydrated prior to the application being rendered.
-        codeSplitState: codeSplitContext.getState(),
-      });
+      initialState: reduxState,
 
-      // Get the render result from the server render context.
-      const renderResult = reactRouterContext.getResult();
-
-      // Check if the render result contains a redirect, if so we need to set
-      // the specific status and redirect header and end the response.
-      if (renderResult.redirect) {
-        response.status(301).setHeader('Location', renderResult.redirect.pathname);
-        response.end();
-        return;
-      }
-
-      response
-        .status(
-          renderResult.missed
-            // If the renderResult contains a "missed" match then we set a 404 code.
-            // Our App component will handle the rendering of an Error404 view.
-            ? 404
-            // Otherwise everything is all good and we send a 200 OK status.
-            : 200,
-        )
-        .send(html);
+      // Nonce which allows us to safely declare inline scripts.
+      nonce,
+      // Running this gets all the helmet properties (e.g. headers/scripts/title etc)
+      // that need to be included within our html.  It's based on the rendered app.
+      // @see https://github.com/nfl/react-helmet
+      helmet: Helmet.rewind(),
+      // We provide our code split state so that it can be included within the
+      // html, and then the client bundle can use this data to know which chunks/
+      // modules need to be rehydrated prior to the application being rendered.
+      codeSplitState: codeSplitContext.getState(),
     });
+
+    // Get the render result from the server render context.
+    const renderResult = reactRouterContext.getResult();
+
+    // Check if the render result contains a redirect, if so we need to set
+    // the specific status and redirect header and end the response.
+    if (renderResult.redirect) {
+      response.status(301).setHeader('Location', renderResult.redirect.pathname);
+      response.end();
+      return;
+    }
+
+    response
+      .status(
+        renderResult.missed
+          // If the renderResult contains a "missed" match then we set a 404 code.
+          // Our App component will handle the rendering of an Error404 view.
+          ? 404
+          // Otherwise everything is all good and we send a 200 OK status.
+          : 200,
+      )
+      .send(html);
+  });
 }
 
 export default (universalReactAppMiddleware : Middleware);

@@ -4,7 +4,8 @@
 import React from 'react';
 import { render } from 'react-dom';
 import { BrowserRouter } from 'react-router';
-import { Provider } from "react-redux";
+import { Provider } from 'react-redux';
+import { RoutesProvider } from 'react-router-addons-routes';
 // This library provides us with the capability to have declerative code
 // splitting within our application.
 // @see https://github.com/ctrlplusb/code-split-component
@@ -13,6 +14,7 @@ import { CodeSplitProvider, rehydrateState } from 'code-split-component';
 import './registerServiceWorker';
 import ReactHotLoader from './components/ReactHotLoader';
 import App from '../shared/components/App';
+import routes from '../shared/components/App/routes';
 import { createReduxStore } from '../shared/Data';
 
 // Get the DOM Element that will host our React application.
@@ -36,11 +38,13 @@ function renderApp(TheApp) {
     render(
       <ReactHotLoader>
         <CodeSplitProvider state={codeSplitState}>
-          <Provider store={reduxStore}>
-            <BrowserRouter>
-              <TheApp />
-            </BrowserRouter>
-          </Provider>
+          <BrowserRouter routes={routes}>
+            <Provider store={reduxStore}>
+              <RoutesProvider routes={routes}>
+                <TheApp />
+              </RoutesProvider>
+            </Provider>
+          </BrowserRouter>
         </CodeSplitProvider>
       </ReactHotLoader>,
       container,

@@ -1,14 +1,15 @@
 /* @flow */
 
 import React from 'react';
-import { connect } from "react-redux";
+import { provideHooks } from 'redial';
+import { connect } from 'react-redux';
 import Helmet from 'react-helmet';
 import { setCounter, getCounter, decrementCounter, incrementCounter, loadCounter } from '../CounterModule';
 
 class About extends React.Component {
 
   componentWillMount() {
-    if (process.env.IS_CLIENT && this.props.value == null) {
+    if (this.props.value == null) {
       this.props.load();
     }
   }
@@ -37,28 +38,19 @@ class About extends React.Component {
 
 }
 
-
-About.fetchData = function(props, context)
-{
-  // Redux' connect() add proxies for static methods, but the top-level HOC
-  // does not have our required and connected state/dispatcher props.
-  if (props.load) {
-    return props.load();
-  }
-
-  return Promise.resolve();
-}
-
-
-const mapStateToProps = (state, ownProps) => ({
-  value: getCounter(state)
+const mapStateToProps = state => ({
+  value: getCounter(state),
 });
 
-const mapDispatchToProps = (dispatch, ownProps) => ({
+const mapDispatchToProps = dispatch => ({
   handleIncrement: () => dispatch(incrementCounter()),
   handleDecrement: () => dispatch(decrementCounter()),
   load: () => dispatch(loadCounter()),
-  reset: (value) => dispatch(setCounter(value == null ? 0 : value))
+  reset: value => dispatch(setCounter(value == null ? 0 : value)),
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(About);
+const hooks = {
+  fetch: ({ dispatch, params }) => dispatch(loadCounter(params.id)),
+};
+
+export default provideHooks(hooks)(connect(mapStateToProps, mapDispatchToProps)(About));
