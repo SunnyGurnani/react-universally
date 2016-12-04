@@ -2,7 +2,6 @@
 
 import type { $Request, $Response, Middleware } from 'express';
 import React from 'react';
-import { trigger } from 'redial';
 import { Provider } from 'react-redux';
 import { renderToString } from 'react-dom/server';
 import { ServerRouter, createServerRenderContext } from 'react-router';
@@ -24,8 +23,10 @@ function fetchServerData(request, dispatch) {
     matchedRoutes,
     dispatch,
   };
-  const components = matchedRoutes.map(route => route.component);
-  return trigger('fetch', components, locals);
+
+  return Promise.all(
+  matchedRoutes.filter(route => route.component && route.component.serverFetch)
+  .map(route => route.component.serverFetch(locals)));
 }
 
 

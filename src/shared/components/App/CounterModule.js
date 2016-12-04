@@ -45,7 +45,6 @@ export function decrementCounter()
  * This somewhat tries to emulate a asyncronous backend request
  */
 async function generateServerResponse() {
-  console.log("Loading counter...");
   let response = await fetch('https://graph.veg.me/?userid=11&query=query{user{id}}');
   let data = await response.json();
   console.log("fetch data = ", data);
@@ -66,9 +65,9 @@ async function generateServerResponse() {
 /**
  * Async data loading using redux-thunk
  */
-export function loadCounter() {
-  console.log("loadCounter() action called");
-  return (dispatch) => generateServerResponse().then((value) => dispatch(setCounter(value)))
+export function loadCounter(id) {
+  console.log("loadCounter() action called", id);
+  return dispatch => generateServerResponse().then(value => dispatch(setCounter(value)))
 }
 
 const initialState = {

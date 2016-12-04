@@ -1,7 +1,6 @@
 /* @flow */
 
 import React from 'react';
-import { provideHooks } from 'redial';
 import { connect } from 'react-redux';
 import Helmet from 'react-helmet';
 import { setCounter, getCounter, decrementCounter, incrementCounter, loadCounter } from '../CounterModule';
@@ -38,6 +37,9 @@ class About extends React.Component {
 
 }
 
+
+About.serverFetch = ({ dispatch, params }) => dispatch(loadCounter(params.id));
+
 const mapStateToProps = state => ({
   value: getCounter(state),
 });
@@ -49,8 +51,5 @@ const mapDispatchToProps = dispatch => ({
   reset: value => dispatch(setCounter(value == null ? 0 : value)),
 });
 
-const hooks = {
-  fetch: ({ dispatch, params }) => dispatch(loadCounter(params.id)),
-};
 
-export default provideHooks(hooks)(connect(mapStateToProps, mapDispatchToProps)(About));
+export default connect(mapStateToProps, mapDispatchToProps)(About);
