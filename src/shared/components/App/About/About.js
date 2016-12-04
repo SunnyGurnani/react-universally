@@ -9,7 +9,7 @@ class About extends React.Component {
 
   componentWillMount() {
     if (this.props.value == null) {
-      this.props.load();
+      this.props.load(this.props.params.id);
     }
   }
 
@@ -47,7 +47,7 @@ const mapStateToProps = state => ({
 const mapDispatchToProps = dispatch => ({
   handleIncrement: () => dispatch(incrementCounter()),
   handleDecrement: () => dispatch(decrementCounter()),
-  load: () => dispatch(loadCounter()),
+  load: (id) => dispatch(loadCounter(id)),
   reset: value => dispatch(setCounter(value == null ? 0 : value)),
 });
 
