@@ -47,7 +47,7 @@ const mapStateToProps = state => ({
 const mapDispatchToProps = dispatch => ({
   handleIncrement: () => dispatch(incrementCounter()),
   handleDecrement: () => dispatch(decrementCounter()),
-  load: (id) => dispatch(loadCounter(id)),
+  load: id => dispatch(loadCounter(id)),
   reset: value => dispatch(setCounter(value == null ? 0 : value)),
 });
 
